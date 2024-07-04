@@ -52,8 +52,6 @@ function Get-FolderTree {
     foreach ($item in $items) {
         $relativePath = $item.FullName.Substring($folder.Length + 1).Replace("\", "/")
         $ignored = $false
-        $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
-        Write-Host $item
         
         foreach ($pattern in $ignorePatterns) {
             if ($relativePath -like $pattern -or $item.FullName -like $pattern) {
@@ -88,7 +86,7 @@ function Summarize-Files {
     )
 
     foreach ($filePath in $filePaths) {
-        $relativePath = $filePath.Substring($baseFolder.Length + 1).Replace("\", "/")
+        $relativePath = $filePath.Substring($baseFolder.Length ).Replace("\", "/")
         Add-Content -Path $outputFile -Value "------"
         Add-Content -Path $outputFile -Value "$relativePath"
         if (Test-Path $filePath) {
@@ -119,7 +117,6 @@ function Get-GitIgnorePatterns {
             }
         }
     }
-    Write-Host $patterns
     return $patterns
 }
 
