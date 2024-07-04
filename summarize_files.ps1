@@ -1,3 +1,26 @@
+<#
+.SYNOPSIS
+This PowerShell script generates a summary of the directory structure and file contents for a specified folder, filtering out items based on a provided .gitignore file. It supports specifying file extensions to include and handles both hidden and visible files.
+
+.PARAMETER folder
+The root folder to analyze.
+
+.PARAMETER exts
+Comma-separated list of file extensions to include in the summary.
+
+.PARAMETER files
+Specific files to summarize if not analyzing a folder.
+
+.PARAMETER ignore
+Path to a .gitignore file to use for filtering out items.
+
+.EXAMPLE
+.\summarize_files.ps1 -folder 'C:\path\to\folder' -exts 'py,txt' -ignore 'C:\path\to\.gitignore'
+
+.EXAMPLE
+.\summarize_files.ps1 -files 'C:\path\to\file1', 'C:\path\to\file2'
+#>
+
 param(
     [string]$folder,
     [string]$exts,
