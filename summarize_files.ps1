@@ -86,7 +86,14 @@ function Summarize-Files {
     )
 
     foreach ($filePath in $filePaths) {
-        $relativePath = $filePath.Substring($baseFolder.Length ).Replace("\", "/")
+        # Check if the file path length is greater than the base folder length
+        if ($filePath.Length -gt $baseFolder.Length) {
+            $relativePath = $filePath.Substring($baseFolder.Length ).Replace("\", "/")
+        } else {
+            # Handle cases where the file path is shorter or base folder is incorrect
+            $relativePath = $filePath.Replace("\", "/")
+        }
+        
         Add-Content -Path $outputFile -Value "------"
         Add-Content -Path $outputFile -Value "$relativePath"
         if (Test-Path $filePath) {
