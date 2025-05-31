@@ -40,7 +40,7 @@ function Get-FolderTree {
         [int]$depth = 5,
         [string]$prefix = ""
     )
-    $tree = ""
+    $tree = "<folder_hierarchy>"
     $filePaths = @()
 
     if ($depth -le 0) {
@@ -65,17 +65,43 @@ function Get-FolderTree {
         }
 
         if ($item.PSIsContainer) {
-            $tree += "$prefix├── $($item.Name)`n"
-            $result = Get-FolderTree -folder $item.FullName -extensions $extensions -ignorePatterns $ignorePatterns -depth ($depth - 1) -prefix "$prefix│   "
+            $tree += "$prefix+-- $($item.Name)`n"
+            $result = Get-FolderTree -folder $item.FullName -extensions $extensions -ignorePatterns $ignorePatterns -depth ($depth - 1) -prefix "$prefix|   "
             $tree += $result.Tree
             $filePaths += $result.FilePaths
         } else {
-            $tree += "$prefix├── $($item.Name)`n"
+            $tree += "$prefix+-- $($item.Name)`n"
             $filePaths += $item.FullName
         }
     }
 
+    $tree += "</folder_hierarchy>"
+
     return @{ Tree = $tree; FilePaths = $filePaths }
+}
+
+function Get-RelativePath {
+    param (
+        [string]$FromPath,
+        [string]$ToPath
+    )
+
+    $fromUri = New-Object System.Uri($FromPath.TrimEnd('\') + '\')
+    $toUri = New-Object System.Uri($ToPath)
+
+    if ($fromUri.Scheme -ne $toUri.Scheme) {
+        # Path can't be made relative.
+        return $ToPath.Replace("\", "/")
+    }
+
+    $relativeUri = $fromUri.MakeRelativeUri($toUri)
+    $relativePath = [System.Uri]::UnescapeDataString($relativeUri.ToString())
+
+    if ($toUri.Scheme -eq 'file') {
+        return $relativePath.Replace('/', '/')
+    } else {
+        return $relativePath
+    }
 }
 
 function Summarize-Files {
@@ -85,23 +111,30 @@ function Summarize-Files {
         [string]$baseFolder
     )
 
+    # Resolve the full path of the base folder
+    $fullBaseFolder = (Get-Item -Path $baseFolder).FullName
+
     foreach ($filePath in $filePaths) {
-        # Check if the file path length is greater than the base folder length
-        if ($filePath.Length -gt $baseFolder.Length) {
-            $relativePath = $filePath.Substring($baseFolder.Length ).Replace("\", "/")
+        # Resolve the full path of the file
+        $fullFilePath = (Get-Item -Path $filePath).FullName
+
+        # Compute the relative path
+        $relativePath = Get-RelativePath -FromPath $fullBaseFolder -ToPath $fullFilePath
+
+        # Start the code block with the opening tag
+        Add-Content -Path $outputFile -Value "<code file=""$relativePath"">"
+
+        if (Test-Path $fullFilePath) {
+            # Add the file content
+            Get-Content -Path $fullFilePath | Add-Content -Path $outputFile
         } else {
-            # Handle cases where the file path is shorter or base folder is incorrect
-            $relativePath = $filePath.Replace("\", "/")
-        }
-        
-        Add-Content -Path $outputFile -Value "------"
-        Add-Content -Path $outputFile -Value "$relativePath"
-        if (Test-Path $filePath) {
-            Get-Content -Path $filePath | Add-Content -Path $outputFile
-        } else {
+            # Indicate if the file was not found
             Add-Content -Path $outputFile -Value "File not found."
         }
-        Add-Content -Path $outputFile -Value ""
+
+        # End the code block with the closing tag
+        Add-Content -Path $outputFile -Value "</code>"
+        Add-Content -Path $outputFile -Value ""  # Add an empty line for readability
     }
 }
 
