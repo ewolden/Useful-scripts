@@ -40,7 +40,7 @@ function Get-FolderTree {
         [int]$depth = 5,
         [string]$prefix = ""
     )
-    $tree = "<folder_hierarchy>"
+    $tree = ""
     $filePaths = @()
 
     if ($depth -le 0) {
@@ -74,8 +74,6 @@ function Get-FolderTree {
             $filePaths += $item.FullName
         }
     }
-
-    $tree += "</folder_hierarchy>"
 
     return @{ Tree = $tree; FilePaths = $filePaths }
 }
